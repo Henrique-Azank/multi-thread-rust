@@ -24,16 +24,25 @@ impl ThreadPool {
 
     /// Create a new ThreadPool with the specified number of threads
     pub fn new(size: usize) -> ThreadPool {
+
+        // The number of threads must be greater than zero
         assert!(size > 0);
 
+        // Create a channel for sending jobs to the worker threads
         let (sender, receiver) = mpsc::channel();
+        
+        // Wrap the receiver in an Arc and Mutex to allow shared ownership and thread-safe access
         let receiver = Arc::new(Mutex::new(receiver));
+        
+        // Instantiate a new vector to hold the worker threads
         let mut workers = Vec::with_capacity(size);
 
+        // Create the specified number of worker threads and add them to the pool
         for id in 0..size {
             workers.push(Worker::new(id, Arc::clone(&receiver)));
         }
 
+        // Create the ThreadPool instance with the workers and sender
         ThreadPool {
             workers,
             sender: Some(sender),

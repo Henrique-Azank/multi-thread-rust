@@ -3,8 +3,13 @@
 //! This module demonstrates data parallelism using the Rayon library,
 //! which makes it easy to convert sequential computations into parallel ones.
 
-use rayon::prelude::*;
+// Base dependencies
 use std::time::Instant;
+
+// Third-party dependencies
+use rayon::prelude::*;
+
+// Project dependencies
 use crate::common;
 
 /// A simple CPU-intensive function for benchmarking

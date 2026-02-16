@@ -3,16 +3,27 @@
 //! This module demonstrates asynchronous programming in Rust using
 //! the Tokio runtime and async/await syntax.
 
+// Third-party dependencies
 use tokio::time::{sleep, Duration, Instant};
 use tokio::task;
+
+// Project dependencies
 use crate::common;
 
 /// Simulate an async task that takes some time to complete
 async fn async_task(id: usize, delay_ms: u64) -> String {
+
+    // Log the task start
     common::print_info(&format!("Task {} started", id));
+
+    // Simulate its execution
     sleep(Duration::from_millis(delay_ms)).await;
+
+    // Print the result 
     let result = format!("Task {} completed after {}ms", id, delay_ms);
     common::print_success(&result);
+
+    // Return the result
     result
 }
 
@@ -20,7 +31,7 @@ async fn async_task(id: usize, delay_ms: u64) -> String {
 async fn spawn_concurrent_tasks(num_tasks: usize, delay_ms: u64) {
     common::print_info(&format!("Spawning {} concurrent async tasks", num_tasks));
     let start = Instant::now();
-    
+
     let mut handles = vec![];
     
     for i in 0..num_tasks {

@@ -3,8 +3,11 @@
 //! This module demonstrates how to safely share state between threads
 //! using Arc (Atomic Reference Counting) and Mutex (Mutual Exclusion).
 
+// Base dependencies
 use std::sync::{Arc, Mutex};
 use std::thread;
+
+// Project dependencies 
 use crate::common;
 
 /// A simple counter protected by a Mutex
@@ -12,18 +15,26 @@ struct Counter {
     value: Mutex<usize>,
 }
 
+// Base method implementations for Counter
 impl Counter {
+    // Structure constructor
     fn new() -> Self {
         Counter {
             value: Mutex::new(0),
         }
     }
 
+    // Increment the counter safely using the Mutex
     fn increment(&self) {
+
+        // Get the safe lock on the counter value
         let mut num = self.value.lock().unwrap();
+
+        // Increment the counter
         *num += 1;
     }
 
+    // Get the current value of the counter
     fn get_value(&self) -> usize {
         *self.value.lock().unwrap()
     }
@@ -31,18 +42,29 @@ impl Counter {
 
 /// Run the shared state example
 pub fn run(num_threads: usize, increments_per_thread: usize) {
+
+    // Log the parameters of the test
     common::print_info(&format!(
         "Creating {} threads, each incrementing a counter {} times",
         num_threads, increments_per_thread
     ));
 
+    // Create a shared counter wrapped in an Arc to allow multiple ownership across threads
     let counter = Arc::new(Counter::new());
+
+    // Vector to hold the thread handles so we can wait for them to finish
     let mut handles = vec![];
 
+    // Create a timer to measure how long the increments take
     let start = std::time::Instant::now();
 
+    // Spawn multiple threads to increment the counter concurrently
     for thread_id in 0..num_threads {
+
+        // Create a new reference to the shared counter for each thread
         let counter_clone = Arc::clone(&counter);
+
+        // Spawn a thread that will increment the counter a specified number of times
         let handle = thread::spawn(move || {
             for i in 0..increments_per_thread {
                 counter_clone.increment();
@@ -56,6 +78,8 @@ pub fn run(num_threads: usize, increments_per_thread: usize) {
             }
             common::print_success(&format!("Thread {} completed all increments", thread_id));
         });
+
+        // Push the thread handle to the vector so we can join later
         handles.push(handle);
     }
 
@@ -64,11 +88,12 @@ pub fn run(num_threads: usize, increments_per_thread: usize) {
         handle.join().unwrap();
     }
 
+    // Calculate the total duration of the increments
     let duration = start.elapsed();
     let final_value = counter.get_value();
     let expected_value = num_threads * increments_per_thread;
 
-    println!();
+    // Log the final results and check for correctness
     common::print_success(&format!("Final counter value: {}", final_value));
     common::print_success(&format!("Expected value: {}", expected_value));
     
@@ -77,26 +102,8 @@ pub fn run(num_threads: usize, increments_per_thread: usize) {
     } else {
         common::print_warning("⚠️  Counter mismatch! This should not happen with Mutex.");
     }
-    
-    common::print_info(&format!("Total time: {:?}", duration));
-    common::print_info(&format!(
-        "Average time per increment: {:?}",
-        duration / (num_threads * increments_per_thread) as u32
-    ));
-}
 
-/// Demonstrate the danger of shared mutable state without synchronization
-#[allow(dead_code)]
-pub fn run_unsafe_example(num_threads: usize, increments_per_thread: usize) {
-    common::print_warning("WARNING: This example shows INCORRECT concurrent code");
-    common::print_warning("This is for educational purposes only - DO NOT use in production");
-    
-    // Note: This would require unsafe code to actually compile
-    // We're keeping this as documentation of what NOT to do
-    common::print_info(&format!(
-        "Without proper synchronization (Mutex), {} threads incrementing {} times each",
-        num_threads, increments_per_thread
-    ));
-    common::print_info("would likely result in a final value less than the expected value");
-    common::print_info(&format!("Expected: {}", num_threads * increments_per_thread));
+    // Log the total time taken for the increments
+    common::print_info(&format!("Total time: {:?}", duration));
+
 }

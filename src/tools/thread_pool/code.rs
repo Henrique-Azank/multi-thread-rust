@@ -109,25 +109,35 @@ impl Worker {
 
 /// Run the thread pool example
 pub fn run(num_threads: usize, num_tasks: usize) {
+
+    // Log the creation of the thread pool
     common::print_info(&format!("Creating thread pool with {} threads", num_threads));
+    
+    // Create a new thread pool with the specified number of threads
     let pool = ThreadPool::new(num_threads);
 
+    // Log the submission of tasks to the thread pool
     common::print_info(&format!("Submitting {} tasks", num_tasks));
     
+
     for i in 0..num_tasks {
         pool.execute(move || {
+            // Fetches the current thread handler
             let thread_id = thread::current().id();
             println!("Task {} executing on thread {:?}", i, thread_id);
+            
             // Simulate some work
             thread::sleep(std::time::Duration::from_millis(100));
         });
     }
 
+    // Submit all the tasks and log the completion of task submission
     common::print_success("All tasks submitted");
     common::print_info("Waiting for all tasks to complete...");
     
     // Pool will be dropped here, waiting for all tasks to complete
     drop(pool);
     
+    // Log the completion of all tasks
     common::print_success("All tasks completed!");
 }

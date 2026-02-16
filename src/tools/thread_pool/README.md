@@ -150,3 +150,27 @@ where
     self.sender.as_ref().unwrap().send(job).unwrap();
 }
 ```
+
+### Ending the execution
+
+The implementation of the `Drop` trait is of fundamental importance to understand how the `ThreadPool` wraps ups its resources. 
+
+```rust
+// Base Drop implementation to clean up resources
+fn drop(&mut self) {
+
+    // The sender of the channel is droped, so is the channel
+    drop(self.sender.take());
+
+    // For each one of the worker threads, we join the thread
+    // with its handler and end its lifecycle 
+    for worker in &mut self.workers {
+        if let Some(thread) = worker.thread.take() {
+            thread.join().unwrap();
+        }
+    }
+}
+```
+
+Essentally, the channel is droped (via dropping its sender) and all the worker threads are "joined" as well. 
+

@@ -3,30 +3,37 @@
 //! This module demonstrates communication between threads using
 //! message passing with channels (mpsc and crossbeam).
 
-use std::sync::mpsc;
-use std::thread;
-use std::time::Duration;
-use crossbeam::channel;
-use crate::common;
+/*
+    NOTE: MPSC means Multiple Producesr, Single Consumer
+*/
 
-/// Run the message passing example with standard library channels
-pub fn run(num_senders: usize, messages_per_sender: usize) {
-    common::print_info("Running standard library mpsc channel example");
-    run_mpsc(num_senders, messages_per_sender);
-    
-    println!();
-    
-    common::print_info("Running crossbeam channel example");
-    run_crossbeam(num_senders, messages_per_sender);
-}
+// Base dependencies
+use std::sync::mpsc;
+use std::{thread, thread::JoinHandle};
+use std::time::Duration;
+
+// Third-party dependencies
+use crossbeam::channel;
+
+// Project dependencies
+use crate::common;
 
 /// Example using standard library mpsc channels
 fn run_mpsc(num_senders: usize, messages_per_sender: usize) {
-    let (tx, rx) = mpsc::channel();
-    let mut handles = vec![];
 
+    // Instantiate a channel for communication between threads
+    let (tx, rx) = mpsc::channel();
+
+    // Vector to hold the sender thread handles
+    let mut handles: Vec<JoinHandle<()>> = vec![];
+
+    // For the specified number of sender threads, spawn a new thread that sends messages to the receiver
     for sender_id in 0..num_senders {
+
+        // Clone the transmitter for each sender thread to allow multiple producers
         let tx_clone = tx.clone();
+
+        // Spawn a sender thread that sends a series of messages to the receiver
         let handle = thread::spawn(move || {
             for msg_num in 0..messages_per_sender {
                 let message = format!("Message {} from sender {}", msg_num, sender_id);
@@ -35,6 +42,8 @@ fn run_mpsc(num_senders: usize, messages_per_sender: usize) {
                 thread::sleep(Duration::from_millis(50));
             }
         });
+
+        // Append the sender thread handle to the vector for later joining
         handles.push(handle);
     }
 
@@ -110,3 +119,15 @@ fn run_crossbeam(num_senders: usize, messages_per_sender: usize) {
         handle.join().unwrap();
     }
 }
+
+/// Run the message passing example with standard library channels
+pub fn run(num_senders: usize, messages_per_sender: usize) {
+    common::print_info("Running standard library mpsc channel example");
+    run_mpsc(num_senders, messages_per_sender);
+    
+    println!();
+    
+    common::print_info("Running crossbeam channel example");
+    run_crossbeam(num_senders, messages_per_sender);
+}
+
